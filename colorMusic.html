@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <title>colorMusic</title>
+      <meta http-equiv="Content-Type">
+      <meta content="text/html; charset=utf-8"> 
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="format-detection" content="telephone=no">
+      <meta name="format-detection" content="email=no">
+      <meta name="msapplication-tap-highlight" content="no" />
+      <script src="js/lib/jquery-3.1.0.min.js"></script>
+
+      <script src="js/lib/easeljs-NEXT.min.js"></script>
+      <script src="js/lib/Button.js"></script>
+    <style>
+      
+      html,body {
+        background-color:white;
+        height:100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      #myColorMusic {
+        overflow: hidden;
+        
+        width: 100%;                
+      }
+    </style>
+  </head>
+  <body  >
+
+  <canvas id="myColorMusic" height="300"></canvas>
+  <div id="gestureDetecte" style="position: fixed;top: 2px;"></div>
+
+    <script>
+  var bounds = {};
+      bounds.w = $(window).width(); 
+      bounds.h = $(window).height(); 
+  var _MaxDistance=pointDistance({x:0,y:0},{x:bounds.w,y:bounds.h});
+  $('#myColorMusic').attr('height',bounds.h);
+  $('#myColorMusic').attr('width',bounds.w);
+
+  var gestureDetecte=$('#gestureDetecte');
+
+  var myColorMusic=document.getElementById('myColorMusic');
+  
+  
+  var stage;
+
+  var _Play;
+  var _PointX; //touch position.x
+  var _PointY;
+  var _NUM=0;// score
+  
+
+
+  var spin1;    // nested invisble container to generate a spirograph effect
+  var spin2;    // nested invisble container to generate a spirograph effect
+
+  var point1={x:0,y:0};
+  var point2={x:0,y:0};
+  var light1={x:0,y:0}; //light point can drag
+  var light2={x:0,y:0};
+  var lightWidth;
+  var darkMatter;
+  var darkMatterRadiu=0;
+  var darkMatterDecrease=false;
+
+  var lightMatter;
+  var lightMatterRadiu=0;
+  var lightMatterDecrease=false;
+
+
+
+
+
+
+  var shape;    // drawing shape
+  var color;    // drawing color
+ // var lastPt;   // last draw position
+  var graphics;
+  var count = 0;
+  var colorOffset;
+  var text;
+  var circle;
+  var circlePress=false;
+  var circle2;
+
+
+rest();
+
+init();
+
+
+
+myColorMusic.addEventListener("touchstart",function(e){
+       // gestureDetecte.text('touchstart') ;
+       // console.log(e);
+        if (_Play) {            
+            return;
+        }
+        _Play = true;   
+        darkMatterDecrease=false;
+        lightMatterDecrease=false; 
+
+        colorOffset = Math.random() * 360;
+        //lastPt = shape.localToGlobal(e.touches[0].clientX - myColorMusic.offsetLeft,e.touches[0].clientY - myColorMusic.offsetTop);
+
+
+        },false);
+
+myColorMusic.addEventListener("touchmove",function(e){
+      //gestureDetecte.text('touchmove');  
+      if (circlePress) {
+        return;
+      };  
+      _PointX = e.touches[0].clientX  - myColorMusic.offsetLeft;
+      _PointY = e.touches[0].clientY- myColorMusic.offsetTop;
+
+     //console.log(e.touches[0].clientX);
+
+        },false);
+
+myColorMusic.addEventListener("touchend",function(e){
+      // gestureDetecte.text('touchend') ;
+      _Play = false;
+       darkMatterDecrease=true;
+       lightMatterDecrease=true;
+        },false);
+
+   
+      
+      
+      
+      
+function rest(){
+darkMatterRadiu=0;
+lightMatterRadiu=0;
+init();
+ 
+} ;  
+
+
+
+
+function init(){
+  stage = new createjs.Stage(myColorMusic);
+  createjs.Touch.enable(stage);
+  stage.autoClear = false;
+ 
+  
+
+
+// Alpha Rectangle, applied each frame at the bottom, fading out the previous content over time.
+  var fade = new createjs.Shape(new createjs.Graphics().f("white").dr(0, 0, myColorMusic.width, myColorMusic.height));
+    fade.alpha = 0.2;
+    stage.addChild(fade);
+
+    shape = new createjs.Shape();
+    shape.y =0;
+    graphics = shape.graphics;
+
+// middle spinner:
+    spin2 = new createjs.Container();
+    spin2.addChild(shape);
+    spin2.x = 0;
+
+
+
+
+
+    // outside spinner:
+    spin1 = new createjs.Container();
+    spin1.addChild(spin2);
+    spin1.x =  0;
+    spin1.y = 0 ;
+    stage.addChild(spin1);
+
+ 
+
+//Mylight drag
+  circle = new createjs.Shape();
+  circle.graphics.beginFill("black").drawCircle(50, 50, 20); 
+  stage.addChild(circle);
+ 
+ circle.addEventListener("pressmove",function(e){
+     //  gestureDetecte.text('pressmove') ;
+        circlePress=true;
+        circle.x=e.stageX-50;
+        circle.y=e.stageY-50;
+        point1.x=circle.x;
+        point1.y=circle.y;
+        
+
+        },false);
+ circle.addEventListener("pressup",function(e){
+      // gestureDetecte.text('pressup') ;
+        circlePress=false;        
+
+        },false);
+  circle2 = new createjs.Shape();
+  circle2.graphics.beginFill("black").drawCircle(150, 150, 20); 
+  stage.addChild(circle2);
+ 
+ circle2.addEventListener("pressmove",function(e){
+      // gestureDetecte.text('pressmove') ;
+        circlePress=true;
+        circle2.x=e.stageX-150;
+        circle2.y=e.stageY-150;
+        },false);
+ circle2.addEventListener("pressup",function(e){
+      // gestureDetecte.text('pressup') ;
+        circlePress=false;        
+
+        },false);
+
+
+ // random dark
+
+  darkMatter = new createjs.Shape();
+
+  darkMatter.graphics.beginFill("rgba(255,255,255,0.5)").drawCircle(50, 200, 0); 
+  stage.addChild(darkMatter);
+//darkMatter.cache(-25, -25, 50, 50);darkMatter.getCacheDataURL()
+
+
+
+// random dark
+
+  lightMatter = new createjs.Shape();
+
+  lightMatter.graphics.beginFill("rgba(0,0,0,0.8)").drawCircle(50, 200, 0); 
+  stage.addChild(lightMatter);
+
+
+
+
+/*
+    text = new createjs.Text("press and pan", "24px Arial", "#777777");
+    text.textBaseline = "middle";
+    text.x =0;
+    text.y =myColorMusic.height / 2;
+    stage.addChild(text);
+
+*/
+//button
+      var btn1 = stage.addChild(new Button("Rest!", "white","white"));
+      btn1.y = bounds.h-88; 
+      btn1.x = (bounds.w-btn1.width)/2; 
+     
+      btn1.addEventListener("pressup",function(e){
+       gestureDetecte.text('pressup') ;
+       console.log('22');
+        
+        rest();
+         
+
+        },false);
+//
+ 
+      
+
+
+
+    //start ticking
+    createjs.Ticker.setInterval(20);    // 20ms = 50fps
+    createjs.Ticker.addEventListener("tick", tick);
+
+    stage.update(); // Draw the stage once
+};  
+       
+  
+function tick(event) {
+    //spin objects
+    spin1.rotation -=0;
+    spin2.rotation +=0;
+    shape.rotation -=0;
+    
+
+
+    light1.x=point1.x+50;
+    light1.y=point1.y+50;
+    light2.x=point2.x+150;
+    light2.y=point2.y+150;
+//
+    darkMatter.x=Math.sin(Math.random()+1);
+    lightMatter.x=Math.cos(Math.random()+1)+12;
+    //console.log('darkMatterRadiu---'+darkMatterRadiu+'---lightMatterRadiu---'+lightMatterRadiu);
+
+    lightWidth=Math.random() * Math.tan(_MaxDistance/pointDistance(light1,light2));
+
+//hittest
+var p = lightMatter.globalToLocal(darkMatter.x, darkMatter.y);
+     var hit = lightMatter.hitTest(p.x, p.y);
+
+
+if (hit) { 
+        console.log("ball hit"); 
+    }
+
+
+//light &dark
+//var doubleMatterContainer=new createjs.Container();
+//stage.addChild(doubleMatterContainer);
+//doubleMatterContainer.rotation+=1;
+//console.log(doubleMatterContainer);
+
+if (lightMatterRadiu>20 && darkMatterRadiu>20) {
+  /*
+  var doubleMatter1=lightMatter.clone();
+  var doubleMatter2=darkMatter.clone();
+ 
+ stage.addChild(doubleMatter1,doubleMatter2);
+
+  var mPoint=middlePoint(doubleMatter1,doubleMatter2);
+  
+  doubleMatterContainer.x=middlePoint.x;
+  doubleMatterContainer.y=middlePoint.y;
+  doubleMatterContainer.addChild(doubleMatter1,doubleMatter2);
+*/
+
+  _NUM+=10;
+ lightMatterRadiu=0;
+ darkMatterRadiu=0;
+
+ var btn2 = stage.addChild(new Button(_NUM, "white","white")); 
+      btn2.y = 18; 
+      btn2.x = (bounds.w-btn2.width)/2;     
+
+
+console.log('right')
+
+
+
+
+}else{
+       //dark 
+
+        if (darkMatterDecrease) {
+          
+                if (darkMatterRadiu>1) {
+                          darkMatterRadiu-=0.005;
+                          var darkMatterGraphics2=new createjs.Graphics().beginFill("rgba(0,0,0,1)").drawCircle(bounds.w/2, bounds.h/2, darkMatterRadiu);
+                          darkMatter.set({graphics:darkMatterGraphics2});
+                };
+        
+        }else{
+              if (lightWidth>100) {
+              darkMatterRadiu+=0.05;
+              var darkMatterGraphics=new createjs.Graphics().beginFill("rgba(0,0,0,1)").drawCircle(bounds.w/2, bounds.h/2, darkMatterRadiu);
+              darkMatter.set({graphics:darkMatterGraphics});
+              };
+
+
+        };
+
+    //light
+
+    if (lightMatterDecrease) {
+        
+              if (lightMatterRadiu>1) {
+                lightMatterRadiu-=0.2;
+              var lightMatterGraphics2=new createjs.Graphics().beginFill("rgba(255,255,255,1)").drawCircle(bounds.w/2, bounds.h/2-80, lightMatterRadiu);
+                 lightMatter.set({graphics:lightMatterGraphics2});
+              };
+                  
+
+        
+    }else{
+              if (lightWidth<90) {
+              lightMatterRadiu+=0.1;
+              var lightMatterGraphics=new createjs.Graphics().beginFill("rgba(255,255,255,1)").drawCircle(bounds.w/2, bounds.h/2-80, lightMatterRadiu);
+              lightMatter.set({graphics:lightMatterGraphics});
+              };
+        };
+   
+
+
+};
+ 
+//
+    if (_Play) {
+
+      var color = createjs.Graphics.getHSL(
+              Math.cos((count++) * 0.1) * 30 + colorOffset,
+              100,
+              50,
+              0.8);
+     
+      graphics.setStrokeStyle(lightWidth, "round").beginStroke(color);
+      //graphics.moveTo(myColorMusic.width ,myColorMusic.height );
+
+      //lastPt = shape.localToGlobal(_PointX, _PointY);
+
+      graphics.bt(circle2.x+150, circle2.y+150, _PointX, _PointY,circle.x+50, circle.y+50);
+     
+    };
+      // draw the new vector line to the canvas:
+      stage.update(event);
+
+      // then clear the shape's vector data so it isn't rendered again next tick:
+      graphics.clear();
+
+
+  };
+ 
+function pointDistance(point1,point2){
+  this.x1=point1.x;
+  this.y1=point1.y;
+  this.x2=point2.x;
+  this.y2=point2.y;
+  var xdiff=this.x2-this.x1,
+      ydiff=this.y2-this.y1;
+  return Math.pow((xdiff * xdiff + ydiff * ydiff), 0.5);  
+}
+
+function middlePoint(point1,point2){
+  this.x1=point1.x;
+  this.y1=point1.y;
+  this.x2=point2.x;
+  this.y2=point2.y;
+  var xdiff=(this.x2-this.x1)/2,
+      ydiff=(this.y2-this.y1)/2;
+  var point={};
+
+      point.x=this.x1+xdiff;
+      point.y=this.y1+ydiff;
+      return point
+};
+  
+    </script>
+  </body>
+</html>
+# colormusic
