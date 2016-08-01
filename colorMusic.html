@@ -16,7 +16,7 @@
     <style>
       
       html,body {
-        background-color:white;
+        background-color:black;
         height:100%;
         margin: 0;
         padding: 0;
@@ -24,8 +24,7 @@
       }
 
       #myColorMusic {
-        overflow: hidden;
-        
+        overflow: hidden;        
         width: 100%;                
       }
     </style>
@@ -54,31 +53,43 @@
   var _PointX; //touch position.x
   var _PointY;
   var _NUM=0;// score
-  
+  var _BG="gray";
+  var _LMC="white";
+  var _DMC="#131313";
 
+  //var spin1;    // nested invisble container to generate a spirograph effect
+  //var spin2;    // nested invisble container to generate a spirograph effect
 
-  var spin1;    // nested invisble container to generate a spirograph effect
-  var spin2;    // nested invisble container to generate a spirograph effect
-
-  var point1={x:0,y:0};
-  var point2={x:0,y:0};
+ 
   var light1={x:0,y:0}; //light point can drag
   var light2={x:0,y:0};
   var lightWidth;
+
   var darkMatter;
   var darkMatterRadiu=0;
   var darkMatterDecrease=false;
+  var dmRotation=false;
+  var dmAngle=0;
+  
+
 
   var lightMatter;
   var lightMatterRadiu=0;
   var lightMatterDecrease=false;
+  var lmRotation=false;
+  var lmAngle=0;
+  
+
+
+  var matterAngle=0;
+   var matters=[];               
+    
 
 
 
 
 
-
-  var shape;    // drawing shape
+ var shape;    // drawing shape
   var color;    // drawing color
  // var lastPt;   // last draw position
   var graphics;
@@ -94,6 +105,32 @@ rest();
 
 init();
 
+var touchTest;
+var touchLongTime={};
+
+
+
+function touchTimeTest(){
+      if (touchTest) {
+      creatMatter();
+      };
+
+};
+
+
+
+function creatMatter(e){
+
+  var matter = new createjs.Shape();
+
+  matter.graphics.beginFill(_LMC).drawCircle(light1.x, light1.y, 3);
+  stage.addChild(matter);
+  
+  matters.push(matter);
+                  
+};
+
+
 
 
 myColorMusic.addEventListener("touchstart",function(e){
@@ -104,10 +141,17 @@ myColorMusic.addEventListener("touchstart",function(e){
         }
         _Play = true;   
         darkMatterDecrease=false;
-        lightMatterDecrease=false; 
+        lightMatterDecrease=false;
+        dmRotation=false;
+        lmRotation=false;
 
         colorOffset = Math.random() * 360;
         //lastPt = shape.localToGlobal(e.touches[0].clientX - myColorMusic.offsetLeft,e.touches[0].clientY - myColorMusic.offsetTop);
+
+        touchTest=true;
+        _PointX =e.touches[0].clientX  - myColorMusic.offsetLeft;
+        _PointY =e.touches[0].clientY- myColorMusic.offsetTop;
+        setTimeout("touchTimeTest()","3000");
 
 
         },false);
@@ -117,11 +161,12 @@ myColorMusic.addEventListener("touchmove",function(e){
       if (circlePress) {
         return;
       };  
-      _PointX = e.touches[0].clientX  - myColorMusic.offsetLeft;
-      _PointY = e.touches[0].clientY- myColorMusic.offsetTop;
+      _PointX = Math.random()*e.touches[0].clientX  - myColorMusic.offsetLeft;
+      _PointY = Math.random()*e.touches[0].clientY- myColorMusic.offsetTop;
 
      //console.log(e.touches[0].clientX);
-
+console.log(e);
+touchTest=true;
         },false);
 
 myColorMusic.addEventListener("touchend",function(e){
@@ -129,9 +174,13 @@ myColorMusic.addEventListener("touchend",function(e){
       _Play = false;
        darkMatterDecrease=true;
        lightMatterDecrease=true;
-        },false);
+       dmRotation=true;
+       lmRotation=true;
+       console.log(e);
+       touchTest=false;
 
-   
+
+        },false);  
       
       
       
@@ -149,41 +198,28 @@ init();
 function init(){
   stage = new createjs.Stage(myColorMusic);
   createjs.Touch.enable(stage);
-  stage.autoClear = false;
- 
-  
+  stage.autoClear = false;  
 
 
 // Alpha Rectangle, applied each frame at the bottom, fading out the previous content over time.
-  var fade = new createjs.Shape(new createjs.Graphics().f("white").dr(0, 0, myColorMusic.width, myColorMusic.height));
-    fade.alpha = 0.2;
+  var fade = new createjs.Shape(new createjs.Graphics().f(_BG).dr(0, 0, myColorMusic.width, myColorMusic.height));
+    fade.alpha = 0.1;
     stage.addChild(fade);
 
-    shape = new createjs.Shape();
+
+   
+
+
+   shape = new createjs.Shape();
+   stage.addChild(shape);
     shape.y =0;
-    graphics = shape.graphics;
-
-// middle spinner:
-    spin2 = new createjs.Container();
-    spin2.addChild(shape);
-    spin2.x = 0;
-
-
-
-
-
-    // outside spinner:
-    spin1 = new createjs.Container();
-    spin1.addChild(spin2);
-    spin1.x =  0;
-    spin1.y = 0 ;
-    stage.addChild(spin1);
-
+   graphics = shape.graphics;
  
 
 //Mylight drag
   circle = new createjs.Shape();
-  circle.graphics.beginFill("black").drawCircle(50, 50, 20); 
+  circle.graphics.setStrokeStyle(1, "round").beginStroke(_LMC).beginFill("gray").drawCircle(50, 50, 20);
+
   stage.addChild(circle);
  
  circle.addEventListener("pressmove",function(e){
@@ -191,8 +227,7 @@ function init(){
         circlePress=true;
         circle.x=e.stageX-50;
         circle.y=e.stageY-50;
-        point1.x=circle.x;
-        point1.y=circle.y;
+        
         
 
         },false);
@@ -202,7 +237,7 @@ function init(){
 
         },false);
   circle2 = new createjs.Shape();
-  circle2.graphics.beginFill("black").drawCircle(150, 150, 20); 
+  circle2.graphics.setStrokeStyle(1, "round").beginStroke(_LMC).beginFill("black").drawCircle(150, 150, 20); 
   stage.addChild(circle2);
  
  circle2.addEventListener("pressmove",function(e){
@@ -222,9 +257,9 @@ function init(){
 
   darkMatter = new createjs.Shape();
 
-  darkMatter.graphics.beginFill("rgba(255,255,255,0.5)").drawCircle(50, 200, 0); 
+  darkMatter.graphics.beginFill(_DMC).drawCircle(0, 0, 0); 
   stage.addChild(darkMatter);
-//darkMatter.cache(-25, -25, 50, 50);darkMatter.getCacheDataURL()
+//
 
 
 
@@ -232,7 +267,7 @@ function init(){
 
   lightMatter = new createjs.Shape();
 
-  lightMatter.graphics.beginFill("rgba(0,0,0,0.8)").drawCircle(50, 200, 0); 
+  lightMatter.graphics.beginFill(_LMC).drawCircle(0, 0, 0); 
   stage.addChild(lightMatter);
 
 
@@ -253,7 +288,7 @@ function init(){
      
       btn1.addEventListener("pressup",function(e){
        gestureDetecte.text('pressup') ;
-       console.log('22');
+     
         
         rest();
          
@@ -274,53 +309,57 @@ function init(){
        
   
 function tick(event) {
-    //spin objects
-    spin1.rotation -=0;
-    spin2.rotation +=0;
-    shape.rotation -=0;
+    
+    lmAngle+=0.02;
+    dmAngle+=0.01;
+    matterAngle+=0.03;
+
+      for (var i = matters.length - 1; i >= 0; i--) {
+          
+          matters[i].graphics.clear();
+
+          matters[i].graphics.beginFill(_LMC).drawCircle(light1.x-i*10, light1.y-i*10, i*2);
+    
+          matters[i].x=Math.sin(matterAngle)*120;
+          matters[i].y=Math.cos(matterAngle)*120;
+
+         
+      };
+                  
+
+
+//
+
+    light1=circle.localToGlobal(50, 50);
+    light2=circle2.localToGlobal(150, 150);
+     
+//
+  
     
 
+    lightWidth=Math.random()* Math.tan(_MaxDistance/pointDistance(circle,circle2))+50;
 
-    light1.x=point1.x+50;
-    light1.y=point1.y+50;
-    light2.x=point2.x+150;
-    light2.y=point2.y+150;
-//
-    darkMatter.x=Math.sin(Math.random()+1);
-    lightMatter.x=Math.cos(Math.random()+1)+12;
-    //console.log('darkMatterRadiu---'+darkMatterRadiu+'---lightMatterRadiu---'+lightMatterRadiu);
-
-    lightWidth=Math.random() * Math.tan(_MaxDistance/pointDistance(light1,light2));
 
 //hittest
-var p = lightMatter.globalToLocal(darkMatter.x, darkMatter.y);
-     var hit = lightMatter.hitTest(p.x, p.y);
-
-
-if (hit) { 
-        console.log("ball hit"); 
-    }
-
 
 //light &dark
-//var doubleMatterContainer=new createjs.Container();
-//stage.addChild(doubleMatterContainer);
-//doubleMatterContainer.rotation+=1;
-//console.log(doubleMatterContainer);
 
-if (lightMatterRadiu>20 && darkMatterRadiu>20) {
-  /*
-  var doubleMatter1=lightMatter.clone();
-  var doubleMatter2=darkMatter.clone();
+
+var lmCenter = stage.localToGlobal(light1.x, light1.y);
+var dmCenter  = stage.localToGlobal(light2.x, light2.y);
+
+var disss=pointDistance(lmCenter,dmCenter); 
  
- stage.addChild(doubleMatter1,doubleMatter2);
+var lmG=stage.localToGlobal(lightMatter.x+light1.x,lightMatter.y+light1.y);
+ var lmD=stage.localToGlobal(darkMatter.x+light2.x,darkMatter.y+light2.y);
+ 
 
-  var mPoint=middlePoint(doubleMatter1,doubleMatter2);
-  
-  doubleMatterContainer.x=middlePoint.x;
-  doubleMatterContainer.y=middlePoint.y;
-  doubleMatterContainer.addChild(doubleMatter1,doubleMatter2);
-*/
+var disss2=pointDistance(dmCenter,lmG)+lightMatterRadiu; 
+
+
+
+if (pointDistance(lmD,lmG)<=(lightMatterRadiu+darkMatterRadiu)) {
+
 
   _NUM+=10;
  lightMatterRadiu=0;
@@ -331,7 +370,7 @@ if (lightMatterRadiu>20 && darkMatterRadiu>20) {
       btn2.x = (bounds.w-btn2.width)/2;     
 
 
-console.log('right')
+
 
 
 
@@ -343,15 +382,30 @@ console.log('right')
           
                 if (darkMatterRadiu>1) {
                           darkMatterRadiu-=0.005;
-                          var darkMatterGraphics2=new createjs.Graphics().beginFill("rgba(0,0,0,1)").drawCircle(bounds.w/2, bounds.h/2, darkMatterRadiu);
+                          var darkMatterGraphics2=new createjs.Graphics().beginFill(_DMC).drawCircle(light2.x, light2.y, darkMatterRadiu);
                           darkMatter.set({graphics:darkMatterGraphics2});
-                };
+                          dmRun(10);
+                }else{
+
+                      dmRun(10);
+
+
+              };
         
         }else{
               if (lightWidth>100) {
-              darkMatterRadiu+=0.05;
-              var darkMatterGraphics=new createjs.Graphics().beginFill("rgba(0,0,0,1)").drawCircle(bounds.w/2, bounds.h/2, darkMatterRadiu);
+
+                if (darkMatterRadiu<30) {
+
+                  darkMatterRadiu+=0.05;
+                };
+             
+              var darkMatterGraphics=new createjs.Graphics().beginFill(_DMC).drawCircle(light2.x, light2.y, darkMatterRadiu);
               darkMatter.set({graphics:darkMatterGraphics});
+              
+              dmRun(10);
+
+
               };
 
 
@@ -362,18 +416,39 @@ console.log('right')
     if (lightMatterDecrease) {
         
               if (lightMatterRadiu>1) {
-                lightMatterRadiu-=0.2;
-              var lightMatterGraphics2=new createjs.Graphics().beginFill("rgba(255,255,255,1)").drawCircle(bounds.w/2, bounds.h/2-80, lightMatterRadiu);
+                lightMatterRadiu-=0.05;
+                
+              var lightMatterGraphics2=new createjs.Graphics().beginFill(_LMC).drawCircle(light1.x, light1.y, lightMatterRadiu);
                  lightMatter.set({graphics:lightMatterGraphics2});
+                 
+                 lmRun(10);
+                 
+
+
+              }else{
+
+                      lmRun(10);
+
+
               };
                   
-
+        
         
     }else{
               if (lightWidth<90) {
-              lightMatterRadiu+=0.1;
-              var lightMatterGraphics=new createjs.Graphics().beginFill("rgba(255,255,255,1)").drawCircle(bounds.w/2, bounds.h/2-80, lightMatterRadiu);
+                
+                if (lightMatterRadiu<30) {
+
+                  lightMatterRadiu+=0.1;
+                };
+              
+              
+              var lightMatterGraphics=new createjs.Graphics().beginFill(_LMC).drawCircle(light1.x, light1.y, lightMatterRadiu);
               lightMatter.set({graphics:lightMatterGraphics});
+              
+            
+              lmRun(10);
+
               };
         };
    
@@ -383,7 +458,7 @@ console.log('right')
  
 //
     if (_Play) {
-
+   
       var color = createjs.Graphics.getHSL(
               Math.cos((count++) * 0.1) * 30 + colorOffset,
               100,
@@ -396,7 +471,7 @@ console.log('right')
       //lastPt = shape.localToGlobal(_PointX, _PointY);
 
       graphics.bt(circle2.x+150, circle2.y+150, _PointX, _PointY,circle.x+50, circle.y+50);
-     
+    
     };
       // draw the new vector line to the canvas:
       stage.update(event);
@@ -407,11 +482,25 @@ console.log('right')
 
   };
  
-function pointDistance(point1,point2){
-  this.x1=point1.x;
-  this.y1=point1.y;
-  this.x2=point2.x;
-  this.y2=point2.y;
+
+
+function lmRun(e){
+                  this.lmDis=e;
+                  lightMatter.x=Math.sin(lmAngle)*120+this.lmDis;
+                  lightMatter.y=Math.cos(lmAngle)*120+this.lmDis;
+        };
+function dmRun(e){
+                  this.dmDis=e;
+                  darkMatter.x=Math.sin(dmAngle)*60+this.dmDis;
+                  darkMatter.y=Math.cos(dmAngle)*60+this.dmDis;
+        };
+
+
+function pointDistance(p1,p2){
+  this.x1=p1.x;
+  this.y1=p1.y;
+  this.x2=p2.x;
+  this.y2=p2.y;
   var xdiff=this.x2-this.x1,
       ydiff=this.y2-this.y1;
   return Math.pow((xdiff * xdiff + ydiff * ydiff), 0.5);  
